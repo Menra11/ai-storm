@@ -19,15 +19,19 @@ interface EdgeData {
   label: string;
 }
 
+interface MyNode extends Node {
+  disavilable?: boolean;
+}
+
 // 初始化应用数据存储
 const myAppDataStore = useMyAppDataStore();
 
 // 定义网络图的引用
 const networkRef = ref();
-const defNodes: Node[] = [];
+const defNodes: MyNode[] = [];
 const defEdges: Edge[] = [];
 const network = ref<{
-  nodes: Node[];
+  nodes: MyNode[];
   edges: Edge[];
   options: Options;
 }>({
@@ -133,29 +137,39 @@ const insertLineBreaks = (str: string, maxLength: number) => {
   return str.replace(new RegExp(`(.{${maxLength}})`, "g"), "$1\n");
 };
 // 处理网络图事件
-const networkEvent = (...args: any[]) => {
-  if (args[0] === "click") {
-    console.log(args[1].nodes[0]);
-    myAppDataStore.selectedNode = args[1].nodes[0];
-  }
-  if (args[0] === "nodes-add") {
-    console.log(args[1]);
-    console.log(network.value.nodes);
-    console.log(network.value.edges);
-  }
-  if (args[0] === "selectNode") {
-    console.log(args[1]);
-    // myAppDataStore.isHiddenNav = false;
-  }
-  if (args[0] === "deselectNode") {
-    console.log(args[1]);
-    // myAppDataStore.isHiddenNav = true;
-  }
+let clickTimer: number | null = null;
+
+const handleClick = (event: any) => {
+  if (clickTimer) clearTimeout(clickTimer);
+  clickTimer = setTimeout(() => {
+    console.log('handleClick with node:', event.nodes[0]);
+    for (let i = 0; i < network.value.nodes.length; i++) {
+      if (network.value.nodes[i].id != event.nodes[0]) continue;
+      if (network.value.nodes[i].disavilable) {
+        network.value.nodes[i].disavilable = false;
+        network.value.nodes[i].font = { color: '#000000' };
+      } else {
+        network.value.nodes[i].disavilable = true;
+        network.value.nodes[i].font = { color: '#AAAAAA' };
+      }
+    }
+    myAppDataStore.selectedNode = event.nodes[0];
+  }, 250);
 };
+
+const handleDoubleClick = (event: any) => {
+  if (clickTimer) clearTimeout(clickTimer);
+  clickTimer = null;
+  console.log('handleDoubleClick with node:', event.nodes[0]);
+  for (let i = 0; i < network.value.nodes.length; i++) {
+    if (network.value.nodes[i].id != event.nodes[0]) continue;
+    addNode(null, {id:network.value.nodes[i].id,  label: network.value.nodes[i].label})
+  }
+}
 
 const keyWord = ref("");
 // 添加节点
-const addNode = async (key?: string) => {
+const addNode = async (key?: string, parent?: {id: number | string, label: string}) => {
   if (myAppDataStore.nodesLength == 0 && key) {
     network.value.nodes.push({
       id: 1,
@@ -165,34 +179,26 @@ const addNode = async (key?: string) => {
     return;
     
   }
-  const selectedId = myAppDataStore.selectedNode;
-  if (!selectedId) return alert("请先选择父节点");
 
-  try {
-    const response: NodeData = await $fetch("/api/nodes", {
-      method: "POST",
-      body: {
-        parentId: selectedId,
-      },
-    });
+  const response: NodeData = await $fetch("/api/nodes", {
+    method: "POST",
+    body: {
+      parent: parent,
+    },
+  });
 
-    // 更新前端数据
-    network.value.nodes.push({
-      id: response.id,
-      label: insertLineBreaks(response.label, 8),
+  network.value.nodes.push({
+    id: response.id,
+    label: insertLineBreaks(response.label, 8),
+  });
+  response.edges?.forEach((edge) => {
+    network.value.edges.push({
+      id: edge.id,
+      from: edge.from,
+      to: edge.to,
+      label: insertLineBreaks(edge.label, 8),
     });
-    response.edges?.forEach((edge) => {
-      network.value.edges.push({
-        id: edge.id,
-        from: edge.from,
-        to: edge.to,
-        label: insertLineBreaks(edge.label, 8),
-      });
-    });
-  } catch (error) {
-    console.error("节点创建失败:", error);
-    alert("创建失败，请稍后重试");
-  }
+  });
 };
 
 // 切换合并节点的显示状态
@@ -214,17 +220,8 @@ const removeNode = (selectedNodeId: number | undefined) => {
     }, 0);
     myAppDataStore.selectedNode = undefined;
   } else {
-    alert("Please select a node first");
+    alert("请先选择节点");
   }
-};
-
-// 重置网络图
-const resetNetwork = async () => {
-  network.value = {
-    nodes: [...defNodes],
-    edges: [...defEdges],
-    options: {},
-  };
 };
 
 // 输入值的引用
@@ -288,15 +285,12 @@ onUpdated(() => {
   <!-- 主要的模板代码 -->
   <div class="w-screen h-screen relative">
     <vue-vis-network
-      ref="networkRef"
       class="w-full bg-white h-full network-background"
       :nodes="network.nodes"
       :edges="network.edges"
       :options="network.options"
-      @click="networkEvent('click', $event)"
-      @nodes-add="networkEvent('nodes-add', $event)"
-      @select-node="networkEvent('selectNode', $event)"
-      @deselect-node="networkEvent('deselectNode', $event)"
+      @click="handleClick($event)"
+      @double-click="handleDoubleClick($event)"
     >
     </vue-vis-network>
 
@@ -339,7 +333,7 @@ onUpdated(() => {
               d="M12 4v16m8-8H4"
             />
           </svg>
-          Add Node
+          添加节点
         </button>
 
         <!-- Combine Node 按钮 -->
@@ -347,7 +341,7 @@ onUpdated(() => {
           @click="combineNode()"
           class="px-4 py-2 text-sm font-medium text-blue-900 bg-white/50 hover:bg-blue-200/30 rounded-lg border border-blue-200/50 hover:border-blue-300 transition-colors duration-200 shadow-sm"
         >
-          Combine Node
+          合并节点
         </button>
 
         <!-- Remove Node 按钮 -->
@@ -355,7 +349,7 @@ onUpdated(() => {
           @click="removeNode(myAppDataStore.selectedNode)"
           class="px-4 py-2 text-sm font-medium text-blue-900 bg-white/50 hover:bg-blue-200/30 rounded-lg border border-blue-200/50 hover:border-blue-300 transition-colors duration-200 shadow-sm"
         >
-          Remove Node
+          删除节点
         </button>
 
         <!-- 分割线 -->
@@ -372,7 +366,7 @@ onUpdated(() => {
           @click="clearNetWork"
           class="px-4 py-2 text-sm font-medium text-red-700 bg-white/50 hover:bg-red-100/30 rounded-lg border border-red-200/50 hover:border-red-300 transition-colors duration-200 shadow-sm"
         >
-          Clear
+          清除所有节点
         </button>
       </nav>
 
@@ -387,7 +381,7 @@ onUpdated(() => {
 
         <!-- Node1 选择 -->
         <div class="w-full space-y-1">
-          <label class="text-xs font-bold text-blue-700/90">Node1:</label>
+          <label class="text-xs font-bold text-blue-700/90">节点1：</label>
           <select
             name="node1"
             class="w-full px-2 py-1 text-sm bg-white/50 rounded-md border border-blue-200/70 focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
@@ -409,7 +403,7 @@ onUpdated(() => {
 
         <!-- Node2 选择 -->
         <div class="w-full space-y-1">
-          <label class="text-xs font-bold text-blue-700/90">Node2:</label>
+          <label class="text-xs font-bold text-blue-700/90">节点2：</label>
           <select
             name="node1"
             class="w-full px-2 py-1 text-sm bg-white/50 rounded-md border border-blue-200/70 focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
@@ -434,7 +428,7 @@ onUpdated(() => {
           class="mt-2 px-3 py-1.5 text-sm font-medium text-blue-900 bg-white/50 hover:bg-blue-200/30 rounded-md border border-blue-200/50 hover:border-blue-300 transition-colors duration-200 shadow-sm"
           @click="Combine()"
         >
-          Combine
+          合并
         </button>
       </div>
     </aside>

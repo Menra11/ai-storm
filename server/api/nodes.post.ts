@@ -4,10 +4,10 @@ export default defineEventHandler(async (event) => {
   // 示例数据生成逻辑
   const newNode = {
     id: Date.now(),
-    label: body.label || '新节点',
+    label: body.parent.label + ' 的子节点',
     edges: [{
       id: Date.now() + 1,
-      from: body.parentId,
+      from: body.parent.id,
       to: Date.now(),
       label: '关联关系'
     }]
