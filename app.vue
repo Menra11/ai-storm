@@ -318,7 +318,7 @@ const getsTheSelectedNode = async () => {
       selectTheListOfNodes.value.push(network.value.nodes[i].label);
     }
   }
-  const data: string = await $fetch("/api/getNodes", {
+  const data: string = await $fetch("/api/summary", {
     method: "POST",
     body: {
       selectedNodes: selectTheListOfNodes.value,
@@ -513,11 +513,11 @@ onUpdated(() => {
       >
         <header class="font-sans text-gl font-bold text-blue-900">总结</header>
 
-        <div
-          class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[120px] break-words overflow-y-auto whitespace-normal"
+        <pre
+          class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[120px] break-words overflow-y-auto whitespace-pre"
         >
           {{ summary }}
-        </div>
+        </pre>
 
         <div class="flex justify-start">
           <button
