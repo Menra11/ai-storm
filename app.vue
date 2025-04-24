@@ -504,21 +504,19 @@ onUpdated(() => {
       </div>
     </aside>
     <main
-      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
-      style="min-width: 320px; min-height: 200px"
+      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 min-h-[200px] min-w-[320px] max-h-1/2 max-w-1/3"
       :hidden="myAppDataStore.isHiddenTheSummery"
     >
       <!-- 总结面板 -->
       <div
         class="flex flex-col gap-2 mx-4 px-4 py-3 bg-blue-100/80 backdrop-blur-xs rounded-xl border border-blue-200/50 shadow-lg transition-all duration-200"
-        
       >
         <header class="font-sans text-gl font-bold text-blue-900">总结</header>
 
         <div
-          class="w-full p-3 space-y-1 bg-white/30 rounded-lg  min-h-[120px]"
+          class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[120px] break-words overflow-y-auto whitespace-normal"
         >
-          hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+          {{ summary }}
         </div>
 
         <div class="flex justify-start">
