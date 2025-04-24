@@ -13,7 +13,5 @@ export default defineNuxtConfig({
   typescript: {
     strict: false,
   },
-  modules: [
-    '@pinia/nuxt',
-  ],
+  modules: ['@pinia/nuxt', '@nuxthub/core'],
 })
