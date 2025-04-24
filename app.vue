@@ -504,7 +504,7 @@ onUpdated(() => {
       </div>
     </aside>
     <main
-      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 min-h-[200px] min-w-[320px] max-h-1/2 max-w-1/3"
+      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 min-h-[200px] min-w-[320px] max-h-1/2"
       :hidden="myAppDataStore.isHiddenTheSummery"
     >
       <!-- 总结面板 -->
