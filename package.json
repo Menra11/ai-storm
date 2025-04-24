@@ -22,6 +22,7 @@
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
     "vue-vis-network": "^1.0.2",
-    "vue-vis-network2": "^0.0.1"
+    "vue-vis-network2": "^0.0.1",
+    "zhipuai-sdk-nodejs-v4": "^0.1.12"
   }
 }
