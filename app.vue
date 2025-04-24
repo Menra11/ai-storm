@@ -9,7 +9,6 @@ import { useMyAppDataStore } from "@/stores/appData";
 interface NodeData {
   id: number | string;
   label: string;
-  edges?: EdgeData[];
 }
 
 interface EdgeData {
@@ -19,12 +18,18 @@ interface EdgeData {
   label: string;
 }
 
+interface NodesData {
+  nodes?: NodeData[];
+  edges?: EdgeData[];
+}
+
 interface MyNode extends Node {
-  disavilable?: boolean;
+  avilable?: boolean;
 }
 
 // 初始化应用数据存储
 const myAppDataStore = useMyAppDataStore();
+let kown:string[] = [];
 
 // 定义网络图的引用
 const networkRef = ref();
@@ -43,7 +48,7 @@ const network = ref<{
       size: 32, // 增大节点尺寸
       borderWidth: 2.5, // 加粗边框
       font: {
-        color: "#1E3A8A",
+        color: "#AAAAAA",
         size: 14,
         face: "Inter, system-ui, sans-serif",
         multi: true, // 启用多行文字
@@ -145,12 +150,12 @@ const handleClick = (event: any) => {
     console.log('handleClick with node:', event.nodes[0]);
     for (let i = 0; i < network.value.nodes.length; i++) {
       if (network.value.nodes[i].id != event.nodes[0]) continue;
-      if (network.value.nodes[i].disavilable) {
-        network.value.nodes[i].disavilable = false;
-        network.value.nodes[i].font = { color: '#000000' };
-      } else {
-        network.value.nodes[i].disavilable = true;
+      if (network.value.nodes[i].avilable) {
+        network.value.nodes[i].avilable = false;
         network.value.nodes[i].font = { color: '#AAAAAA' };
+      } else {
+        network.value.nodes[i].avilable = true;
+        network.value.nodes[i].font = { color: '#000000' };
       }
     }
     myAppDataStore.selectedNode = event.nodes[0];
@@ -163,41 +168,56 @@ const handleDoubleClick = (event: any) => {
   console.log('handleDoubleClick with node:', event.nodes[0]);
   for (let i = 0; i < network.value.nodes.length; i++) {
     if (network.value.nodes[i].id != event.nodes[0]) continue;
-    addNode(null, {id:network.value.nodes[i].id,  label: network.value.nodes[i].label})
+    let len = 2;
+    if (network.value.nodes[i].id === 1) len = 4;
+    addNode(null, {id:network.value.nodes[i].id,  label: network.value.nodes[i].label, len: len, konw: kown})
   }
 }
 
 const keyWord = ref("");
 // 添加节点
-const addNode = async (key?: string, parent?: {id: number | string, label: string}) => {
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const addNode = async (key?: string, parent?: {id: number | string, label: string, len: number ,konw: string[]}) => {
   if (myAppDataStore.nodesLength == 0 && key) {
     network.value.nodes.push({
       id: 1,
       label: key,
+      font: { color: '#000000' },
+      avilable: true,
     });
     keyWord.value = ""; // 清空输入框
     return;
-    
   }
-
-  const response: NodeData = await $fetch("/api/nodes", {
+  const response: NodesData = await $fetch("/api/nodes", {
     method: "POST",
     body: {
       parent: parent,
     },
   });
-
-  network.value.nodes.push({
-    id: response.id,
-    label: insertLineBreaks(response.label, 8),
-  });
-  response.edges?.forEach((edge) => {
+  response.edges?.forEach(async (edge) => {
     network.value.edges.push({
       id: edge.id,
       from: edge.from,
       to: edge.to,
-      label: insertLineBreaks(edge.label, 8),
+      label: edge.label,
     });
+  });
+  for (const node of response.nodes) {
+    await sleep(100);
+    network.value.nodes.push({
+      id: node.id,
+      label: insertLineBreaks(node.label, 20),
+    });
+  }
+  response.edges?.forEach((edge) => {
+    if (edge.from == parent?.id) {
+      for (let i = 0; i < network.value.nodes.length; i++) {
+        if (network.value.nodes[i].id != edge.to) continue;
+        network.value.nodes[i].font = { color: '#000000' };
+        network.value.nodes[i].avilable = true;
+        kown.push(network.value.nodes[i].label);
+      }
+    }
   });
 };
 
@@ -241,7 +261,7 @@ const Combine = async () => {
   if (selectedNode1.value === selectedNode2.value)
     return alert("请选择两个不同的节点");
   try {
-    const response: NodeData = await $fetch("/api/combine", {
+    const response: NodesData = await $fetch("/api/combine", {
       method: "POST",
       body: { nodeIds, node1, node2 },
     });
