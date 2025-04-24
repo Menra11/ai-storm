@@ -24,12 +24,12 @@ interface NodesData {
 }
 
 interface MyNode extends Node {
-  avilable?: boolean;
+  available?: boolean;
 }
 
 // 初始化应用数据存储
 const myAppDataStore = useMyAppDataStore();
-let kown:string[] = [];
+let kown: string[] = [];
 
 // 定义网络图的引用
 const networkRef = ref();
@@ -142,22 +142,25 @@ const insertLineBreaks = (str: string, maxLength: number) => {
   return str.replace(new RegExp(`(.{${maxLength}})`, "g"), "$1\n");
 };
 // 处理网络图事件
-let clickTimer: number | null = null;
+let clickTimer: number | null | NodeJS.Timeout = null;
 
 const handleClick = (event: any) => {
   if (clickTimer) clearTimeout(clickTimer);
   clickTimer = setTimeout(() => {
-    console.log('handleClick with node:', event.nodes[0]);
-    for (let i = 0; i < network.value.nodes.length; i++) {
-      if (network.value.nodes[i].id != event.nodes[0]) continue;
-      if (network.value.nodes[i].avilable) {
-        network.value.nodes[i].avilable = false;
-        network.value.nodes[i].font = { color: '#AAAAAA' };
-      } else {
-        network.value.nodes[i].avilable = true;
-        network.value.nodes[i].font = { color: '#000000' };
-      }
+    console.log("handleClick with node:", event.nodes[0]);
+    const targetIndex = network.value.nodes.findIndex(
+      (n) => n.id === event.nodes[0]
+    );
+    if (targetIndex > -1) {
+      network.value.nodes[targetIndex].available =
+        !network.value.nodes[targetIndex].available;
+      network.value.nodes[targetIndex].font = {
+        color: network.value.nodes[targetIndex].available
+          ? "#000000"
+          : "#AAAAAA",
+      };
     }
+
     myAppDataStore.selectedNode = event.nodes[0];
   }, 250);
 };
@@ -165,25 +168,42 @@ const handleClick = (event: any) => {
 const handleDoubleClick = (event: any) => {
   if (clickTimer) clearTimeout(clickTimer);
   clickTimer = null;
-  console.log('handleDoubleClick with node:', event.nodes[0]);
+  console.log("handleDoubleClick with node:", event.nodes[0]);
+  const targetIndex = network.value.nodes.findIndex(
+    (n) => n.id === event.nodes[0]
+  );
+  if (targetIndex > -1) {
+    network.value.nodes[targetIndex].available = true;
+    network.value.nodes[targetIndex].font = {
+      color: "#000000",
+    };
+  }
   for (let i = 0; i < network.value.nodes.length; i++) {
     if (network.value.nodes[i].id != event.nodes[0]) continue;
     let len = 2;
     if (network.value.nodes[i].id === 1) len = 4;
-    addNode(null, {id:network.value.nodes[i].id,  label: network.value.nodes[i].label, len: len, konw: kown})
+    addNode(null, {
+      id: network.value.nodes[i].id,
+      label: network.value.nodes[i].label,
+      len: len,
+      konw: kown,
+    });
   }
-}
+};
 
 const keyWord = ref("");
 // 添加节点
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-const addNode = async (key?: string, parent?: {id: number | string, label: string, len: number ,konw: string[]}) => {
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const addNode = async (
+  key?: string,
+  parent?: { id: number | string; label: string; len: number; konw: string[] }
+) => {
   if (myAppDataStore.nodesLength == 0 && key) {
     network.value.nodes.push({
       id: 1,
       label: key,
-      font: { color: '#000000' },
-      avilable: true,
+      font: { color: "#000000" },
+      available: true,
     });
     keyWord.value = ""; // 清空输入框
     return;
@@ -203,7 +223,7 @@ const addNode = async (key?: string, parent?: {id: number | string, label: strin
     });
   });
   for (const node of response.nodes) {
-    await sleep(100);
+    await sleep(300);
     network.value.nodes.push({
       id: node.id,
       label: insertLineBreaks(node.label, 20),
@@ -213,8 +233,8 @@ const addNode = async (key?: string, parent?: {id: number | string, label: strin
     if (edge.from == parent?.id) {
       for (let i = 0; i < network.value.nodes.length; i++) {
         if (network.value.nodes[i].id != edge.to) continue;
-        network.value.nodes[i].font = { color: '#000000' };
-        network.value.nodes[i].avilable = true;
+        network.value.nodes[i].font = { color: "#000000" };
+        network.value.nodes[i].available = true;
         kown.push(network.value.nodes[i].label);
       }
     }
@@ -267,8 +287,8 @@ const Combine = async () => {
     });
 
     network.value.nodes.push({
-      id: response.id,
-      label: insertLineBreaks(response.label, 8),
+      id: response.nodes[0].id,
+      label: insertLineBreaks(response.nodes[0].label, 8),
     });
     response.edges?.forEach((edge) => {
       network.value.edges.push({
@@ -287,6 +307,26 @@ const Combine = async () => {
     alert("合并操作失败");
   }
 };
+const selectTheListOfNodes = ref([]);
+const summary = ref("");
+const getsTheSelectedNode = async () => {
+  myAppDataStore.isHiddenTheSummery = !myAppDataStore.isHiddenTheSummery;
+  selectTheListOfNodes.value = [];
+  summary.value = "";
+  for (let i = 0; i < network.value.nodes.length; i++) {
+    if (network.value.nodes[i].available) {
+      selectTheListOfNodes.value.push(network.value.nodes[i].label);
+    }
+  }
+  const data: string = await $fetch("/api/getNodes", {
+    method: "POST",
+    body: {
+      selectedNodes: selectTheListOfNodes.value,
+    },
+  });
+  summary.value = data;
+  console.log("服务端存储结果:", data);
+};
 
 // 清除网络图数据
 const clearNetWork = () => {
@@ -294,6 +334,7 @@ const clearNetWork = () => {
   network.value.edges = [];
   myAppDataStore.selectedNode = undefined;
   myAppDataStore.isHiddenCombineNav = true;
+  location.reload();
 };
 onUpdated(() => {
   // 监听网络图的变化
@@ -339,6 +380,7 @@ onUpdated(() => {
           v-else="myAppDataStore.nodesLength > 0"
           @click="addNode()"
           class="flex items-center px-4 py-2 text-sm font-medium text-blue-900 bg-white/50 hover:bg-blue-200/30 rounded-lg transition-all duration-200 border border-blue-200/50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
+          hidden
         >
           <svg
             class="w-5 h-5 mr-2 text-blue-600"
@@ -360,6 +402,7 @@ onUpdated(() => {
         <button
           @click="combineNode()"
           class="px-4 py-2 text-sm font-medium text-blue-900 bg-white/50 hover:bg-blue-200/30 rounded-lg border border-blue-200/50 hover:border-blue-300 transition-colors duration-200 shadow-sm"
+          hidden
         >
           合并节点
         </button>
@@ -368,8 +411,16 @@ onUpdated(() => {
         <button
           @click="removeNode(myAppDataStore.selectedNode)"
           class="px-4 py-2 text-sm font-medium text-blue-900 bg-white/50 hover:bg-blue-200/30 rounded-lg border border-blue-200/50 hover:border-blue-300 transition-colors duration-200 shadow-sm"
+          hidden
         >
           删除节点
+        </button>
+        <!-- 提出总结 -->
+        <button
+          @click="getsTheSelectedNode()"
+          class="px-4 py-2 text-sm font-medium text-blue-900 bg-white/50 hover:bg-blue-200/30 rounded-lg border border-blue-200/50 hover:border-blue-300 transition-colors duration-200 shadow-sm"
+        >
+          提出总结
         </button>
 
         <!-- 分割线 -->
@@ -452,6 +503,34 @@ onUpdated(() => {
         </button>
       </div>
     </aside>
+    <main
+      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
+      style="min-width: 320px; min-height: 200px"
+      :hidden="myAppDataStore.isHiddenTheSummery"
+    >
+      <!-- 总结面板 -->
+      <div
+        class="flex flex-col gap-2 mx-4 px-4 py-3 bg-blue-100/80 backdrop-blur-xs rounded-xl border border-blue-200/50 shadow-lg transition-all duration-200"
+        
+      >
+        <header class="font-sans text-gl font-bold text-blue-900">总结</header>
+
+        <div
+          class="w-full p-3 space-y-1 bg-white/30 rounded-lg  min-h-[120px]"
+        >
+          hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+        </div>
+
+        <div class="flex justify-start">
+          <button
+            class="mt-2 px-3 py-1.5 text-sm font-medium text-blue-900 bg-white/50 hover:bg-blue-200/30 rounded-md border border-blue-200/50 hover:border-blue-300 transition-colors duration-200 shadow-sm"
+            @click="clearNetWork"
+          >
+            确认
+          </button>
+        </div>
+      </div>
+    </main>
   </div>
 </template>
 

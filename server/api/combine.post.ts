@@ -55,8 +55,10 @@ export default defineEventHandler(async (event) => {
   ];
   // 7. 返回响应
   return {
-    id: Date.now(),
-    label: body.label || "新节点",
+    nodes:{
+      id: Date.now(),
+      label: body.label || "新节点"
+    },
     edges: newEdges.map((e) => ({
       id: e.id,
       from: e.from,
