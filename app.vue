@@ -29,6 +29,7 @@ interface MyNode extends Node {
 
 // 初始化应用数据存储
 const myAppDataStore = useMyAppDataStore();
+const mySummaryStore = useMySummaryStore();
 let kown: string[] = [];
 
 // 定义网络图的引用
@@ -160,6 +161,13 @@ const handleClick = (event: any) => {
           ? "#000000"
           : "#AAAAAA",
       };
+      if (network.value.nodes[targetIndex].available) {
+        kown.push(network.value.nodes[targetIndex].label);
+      } else {
+        kown = kown.filter(
+          (item) => item !== network.value.nodes[targetIndex].label
+        );
+      }
     }
 
     myAppDataStore.selectedNode = event.nodes[0];
@@ -179,6 +187,22 @@ const handleDoubleClick = (event: any) => {
     network.value.nodes[targetIndex].font = {
       color: "#000000",
     };
+    if (
+      kown.find((item) => item === network.value.nodes[targetIndex].label) ==
+      undefined
+    ) {
+      kown.push(network.value.nodes[targetIndex].label);
+    } else {
+      kown = kown.filter(
+        (item) => item !== network.value.nodes[targetIndex].label
+      );
+    }
+    console.log(
+      "touten",
+      kown.find((item) => item === network.value.nodes[targetIndex].label),
+      kown,
+      network.value.nodes[targetIndex].label
+    );
     if (targetIndex != 0) {
       const fromTargetIndex = network.value.nodes.findIndex(
         (n) => n.id === network.value.edges[targetIndex].from
@@ -188,6 +212,25 @@ const handleDoubleClick = (event: any) => {
       network.value.nodes[fromTargetIndex].font = {
         color: "#000000",
       };
+
+      if (
+        kown.find(
+          (item) => item === network.value.nodes[fromTargetIndex].label
+        ) == undefined
+      ) {
+        kown.push(network.value.nodes[fromTargetIndex].label);
+      } else {
+        kown = kown.filter(
+          (item) => item !== network.value.nodes[fromTargetIndex].label
+        );
+      }
+      console.log(
+        "toutenfrom",
+        kown.find(
+          (item) => item === network.value.nodes[fromTargetIndex].label
+        ),
+        kown
+      );
     }
   }
   for (let i = 0; i < network.value.nodes.length; i++) {
@@ -235,7 +278,7 @@ const addNode = async (
     });
   });
   for (const node of response.nodes) {
-    await sleep(300);
+    await sleep(200);
     network.value.nodes.push({
       id: node.id,
       label: insertLineBreaks(node.label, 20),
@@ -247,7 +290,6 @@ const addNode = async (
         if (network.value.nodes[i].id != edge.to) continue;
         network.value.nodes[i].font = { color: "#AAAAAA" };
         network.value.nodes[i].available = false;
-        kown.push(network.value.nodes[i].label);
       }
     }
   });
@@ -340,6 +382,7 @@ const getsTheSelectedNode = async () => {
     },
   });
   summary.value = data;
+  mySummaryStore.summary.push(data);
   console.log("服务端存储结果:", data);
 };
 
@@ -455,7 +498,36 @@ onUpdated(() => {
           清除所有节点
         </button>
       </nav>
-
+      <!-- 历史记录 -->
+      <div
+        class="flex flex-col gap-2 mt-4  py-3 w-48"
+        :hidden="!!mySummaryStore.summary"
+      >
+        <div
+          class="flex flex-col px-4 py-3 w-48 bg-blue-100/80 backdrop-blur-xs rounded-xl border border-blue-200/50 shadow-lg transition-all duration-200"
+        >
+          <header class="font-sans text-gl font-bold text-blue-900">
+            历史记录
+          </header>
+          <div
+            class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[80px] break-words overflow-y-auto"
+          >
+            <!-- 数据展示 -->
+              <div class="text-blue-900 font-medium mb-2">
+                 {{ mySummaryStore.summary.length }} 条记录
+              </div>
+              <ul class="space-y-2">
+                <li
+                  v-for="(item, index) in mySummaryStore.summary"
+                  :key="index"
+                  class="flex items-start before:content-['•'] before:mr-2 before:text-blue-400"
+                >
+                  <span class="text-blue-800">{{ item }}</span>
+                </li>
+              </ul>
+          </div>
+        </div>
+      </div>
       <!-- Combine 面板 -->
       <div
         class="flex flex-col gap-2 mt-4 px-4 py-3 bg-blue-100/80 backdrop-blur-xs rounded-xl border border-blue-200/50 shadow-lg transition-all duration-200"
