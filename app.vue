@@ -320,6 +320,7 @@ const Combine = async () => {
   }
 };
 const selectTheListOfNodes = ref([]);
+const selectTheStringOfNodes = ref("");
 const summary = ref("");
 const getsTheSelectedNode = async () => {
   myAppDataStore.isHiddenTheSummery = !myAppDataStore.isHiddenTheSummery;
@@ -328,8 +329,10 @@ const getsTheSelectedNode = async () => {
   for (let i = 0; i < network.value.nodes.length; i++) {
     if (network.value.nodes[i].available) {
       selectTheListOfNodes.value.push(network.value.nodes[i].label);
+      selectTheStringOfNodes.value += network.value.nodes[i].label + "->";
     }
   }
+  selectTheStringOfNodes.value = selectTheStringOfNodes.value.slice(0, -2);
   const data: string = await $fetch("/api/summary", {
     method: "POST",
     body: {
@@ -524,12 +527,22 @@ onUpdated(() => {
         class="flex flex-col gap-2 mx-4 px-4 py-3 bg-blue-100/80 backdrop-blur-xs rounded-xl border border-blue-200/50 shadow-lg transition-all duration-200"
       >
         <header class="font-sans text-gl font-bold text-blue-900">总结</header>
-
-        <pre
-          class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[120px] break-words overflow-y-auto whitespace-pre"
+        <div
+          class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[120px] break-words overflow-y-auto whitespace-pre text-blue-900"
+          v-if="summary"
         >
-          {{ summary }}
-        </pre>
+          选择的病症节点：{{ selectTheStringOfNodes }}{{ summary }}
+        </div>
+        <div
+          class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[120px] break-words overflow-y-auto whitespace-pre"
+          v-else
+        >
+          <div class="dot-loading flex items-start justify-start space-x-2 p-3">
+            <div class="dot animate-pulse"></div>
+            <div class="dot animate-pulse"></div>
+            <div class="dot animate-pulse"></div>
+          </div>
+        </div>
 
         <div class="flex justify-start">
           <button
@@ -569,5 +582,35 @@ onUpdated(() => {
 /* 画布透明处理 */
 :deep(.vis-network) canvas {
   background-color: transparent !important;
+}
+/* 自定义动画关键帧 */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* 圆点基础样式 */
+.dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+  background-color: #3b82f6;
+  animation: pulse 1.4s infinite ease-in-out;
+}
+
+/* 设置延迟 */
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
 }
 </style>
