@@ -160,13 +160,6 @@ const handleClick = (event: any) => {
           ? "#000000"
           : "#AAAAAA",
       };
-      if (network.value.nodes[targetIndex].available) {
-        kown.push(network.value.nodes[targetIndex].label);
-      } else {
-        kown = kown.filter(
-          (item) => item !== network.value.nodes[targetIndex].label
-        );
-      }
     }
 
     myAppDataStore.selectedNode = event.nodes[0];
@@ -181,55 +174,22 @@ const handleDoubleClick = (event: any) => {
   const targetIndex = network.value.nodes.findIndex(
     (n) => n.id === event.nodes[0]
   );
+  const targetEdge = network.value.edges.findIndex(
+    (e) => e.id === event.nodes[0] 
+  );
   if (targetIndex > -1) {
     network.value.nodes[targetIndex].available = true;
     network.value.nodes[targetIndex].font = {
       color: "#000000",
     };
-    if (
-      kown.find((item) => item === network.value.nodes[targetIndex].label) ==
-      undefined
-    ) {
-      kown.push(network.value.nodes[targetIndex].label);
-    } else {
-      kown = kown.filter(
-        (item) => item !== network.value.nodes[targetIndex].label
-      );
-    }
-    console.log(
-      "touten",
-      kown.find((item) => item === network.value.nodes[targetIndex].label),
-      kown,
-      network.value.nodes[targetIndex].label
-    );
     if (targetIndex != 0) {
       const fromTargetIndex = network.value.nodes.findIndex(
-        (n) => n.id === network.value.edges[targetIndex].from
+        (n) => n.id === network.value.edges[targetEdge].from
       );
-      console.log("handleDoubleClick with fromNode:", fromTargetIndex);
       network.value.nodes[fromTargetIndex].available = true;
       network.value.nodes[fromTargetIndex].font = {
         color: "#000000",
       };
-
-      if (
-        kown.find(
-          (item) => item === network.value.nodes[fromTargetIndex].label
-        ) == undefined
-      ) {
-        kown.push(network.value.nodes[fromTargetIndex].label);
-      } else {
-        kown = kown.filter(
-          (item) => item !== network.value.nodes[fromTargetIndex].label
-        );
-      }
-      console.log(
-        "toutenfrom",
-        kown.find(
-          (item) => item === network.value.nodes[fromTargetIndex].label
-        ),
-        kown
-      );
     }
   }
   for (let i = 0; i < network.value.nodes.length; i++) {
@@ -259,6 +219,7 @@ const addNode = async (
       font: { color: "#000000" },
       available: true,
     });
+    kown.push(key);
     keyWord.value = ""; // 清空输入框
     return;
   }
@@ -289,6 +250,7 @@ const addNode = async (
         if (network.value.nodes[i].id != edge.to) continue;
         network.value.nodes[i].font = { color: "#AAAAAA" };
         network.value.nodes[i].available = false;
+        kown.push(network.value.nodes[i].label);
       }
     }
   });
@@ -571,7 +533,8 @@ onUpdated(() => {
           class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[120px] break-words overflow-y-auto whitespace-pre text-blue-900"
           v-if="summary"
         >
-          选择的病症节点：{{ selectTheStringOfNodes }}{{ summary }}
+          <div>选择的病症节点：{{ selectTheStringOfNodes }}</div>
+          {{ summary }}
         </div>
         <div
           class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[120px] break-words overflow-y-auto whitespace-pre"
