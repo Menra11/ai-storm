@@ -154,6 +154,7 @@ const handleClick = (event: any) => {
     if (targetIndex > -1) {
       network.value.nodes[targetIndex].available =
         !network.value.nodes[targetIndex].available;
+
       network.value.nodes[targetIndex].font = {
         color: network.value.nodes[targetIndex].available
           ? "#000000"
@@ -162,6 +163,7 @@ const handleClick = (event: any) => {
     }
 
     myAppDataStore.selectedNode = event.nodes[0];
+    console.log(network.value);
   }, 250);
 };
 
@@ -177,6 +179,16 @@ const handleDoubleClick = (event: any) => {
     network.value.nodes[targetIndex].font = {
       color: "#000000",
     };
+    if (targetIndex != 0) {
+      const fromTargetIndex = network.value.nodes.findIndex(
+        (n) => n.id === network.value.edges[targetIndex].from
+      );
+      console.log("handleDoubleClick with fromNode:", fromTargetIndex);
+      network.value.nodes[fromTargetIndex].available = true;
+      network.value.nodes[fromTargetIndex].font = {
+        color: "#000000",
+      };
+    }
   }
   for (let i = 0; i < network.value.nodes.length; i++) {
     if (network.value.nodes[i].id != event.nodes[0]) continue;
@@ -233,8 +245,8 @@ const addNode = async (
     if (edge.from == parent?.id) {
       for (let i = 0; i < network.value.nodes.length; i++) {
         if (network.value.nodes[i].id != edge.to) continue;
-        network.value.nodes[i].font = { color: "#000000" };
-        network.value.nodes[i].available = true;
+        network.value.nodes[i].font = { color: "#AAAAAA" };
+        network.value.nodes[i].available = false;
         kown.push(network.value.nodes[i].label);
       }
     }
