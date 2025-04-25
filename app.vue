@@ -29,7 +29,6 @@ interface MyNode extends Node {
 
 // 初始化应用数据存储
 const myAppDataStore = useMyAppDataStore();
-const mySummaryStore = useMySummaryStore();
 let kown: string[] = [];
 
 // 定义网络图的引用
@@ -382,7 +381,6 @@ const getsTheSelectedNode = async () => {
     },
   });
   summary.value = data;
-  mySummaryStore.summary.push(data);
   console.log("服务端存储结果:", data);
 };
 
@@ -498,36 +496,6 @@ onUpdated(() => {
           清除所有节点
         </button>
       </nav>
-      <!-- 历史记录 -->
-      <div
-        class="flex flex-col gap-2 mt-4  py-3 w-48"
-        :hidden="!!mySummaryStore.summary"
-      >
-        <div
-          class="flex flex-col px-4 py-3 w-48 bg-blue-100/80 backdrop-blur-xs rounded-xl border border-blue-200/50 shadow-lg transition-all duration-200"
-        >
-          <header class="font-sans text-gl font-bold text-blue-900">
-            历史记录
-          </header>
-          <div
-            class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[80px] break-words overflow-y-auto"
-          >
-            <!-- 数据展示 -->
-              <div class="text-blue-900 font-medium mb-2">
-                 {{ mySummaryStore.summary.length }} 条记录
-              </div>
-              <ul class="space-y-2">
-                <li
-                  v-for="(item, index) in mySummaryStore.summary"
-                  :key="index"
-                  class="flex items-start before:content-['•'] before:mr-2 before:text-blue-400"
-                >
-                  <span class="text-blue-800">{{ item }}</span>
-                </li>
-              </ul>
-          </div>
-        </div>
-      </div>
       <!-- Combine 面板 -->
       <div
         class="flex flex-col gap-2 mt-4 px-4 py-3 bg-blue-100/80 backdrop-blur-xs rounded-xl border border-blue-200/50 shadow-lg transition-all duration-200"
