@@ -35,6 +35,56 @@ let kown: string[] = [];
 const networkRef = ref();
 const defNodes: MyNode[] = [];
 const defEdges: Edge[] = [];
+
+const COLOR_SCHEME = {
+  // 基础色
+  default: {
+    background: "#ffffff", // 白色背景
+    border: "#93C5FD", // Tailwind blue-300
+    highlight: {
+      background: "#ffffff", // 高亮时更白
+      border: "#3B82F6", // Tailwind blue-500
+    },
+    hover: {
+      background: "#dbeafe", // Tailwind blue-100
+      border: "#60A5FA", // Tailwind blue-400
+    }, // Tailwind slate-400
+  },
+  // 激活状态
+  active: {
+    background: "#EDE9FE", // Tailwind purple-50
+    border: "#8B5CF6", // Tailwind purple-300
+    highlight: {
+      background: "#EDE9FE", // Tailwind purple-100
+      border: "#8B5CF6", // Tailwind purple-500
+    },
+    hover: {
+      background: "#8B5CF6", // 比常规状态深2个色阶
+      border: "#7C3AED", // 创造更明显的交互反馈
+    },
+  },
+  // 边
+  edge: {
+    default: {
+      color: "#93C5FD", // 与节点默认边框色一致 (blue-300)
+      highlight: "#3B82F6", // 与节点高亮边框色同步 (blue-500)
+      hover: "#60A5FA", // 与节点悬停色对应 (blue-400)
+    },
+    active: {
+      color: "#8B5CF6", // 与激活节点边框色同步 (purple-500)
+      highlight: "#7C3AED", // 与激活节点悬停边框色对应 (purple-600)
+      hover: "#6D28D9", // 新增深紫色悬停状态 (purple-700)
+    },
+  },
+};
+const COLOR_FONT = {
+  default: "#64748B", // Tailwind slate-500
+  active: "#4C1D95", // Tailwind purple-900
+  edge: {
+    default: "#3B82F6", // 使用节点高亮色 (blue-500)
+    active: "#7C3AED", // 使用激活悬停色 (purple-600)
+  },
+};
 const network = ref<{
   nodes: MyNode[];
   edges: Edge[];
@@ -48,7 +98,7 @@ const network = ref<{
       size: 32, // 增大节点尺寸
       borderWidth: 2.5, // 加粗边框
       font: {
-        color: "#AAAAAA",
+        color: COLOR_FONT.default,
         size: 14,
         face: "Inter, system-ui, sans-serif",
         multi: true, // 启用多行文字
@@ -72,38 +122,23 @@ const network = ref<{
       },
       shadow: {
         enabled: true,
-        color: "rgba(147, 197, 253, 0.3)", // 蓝色阴影
+        color: "#93c5fd4c", // 蓝色阴影
         size: 10,
         x: 3,
         y: 3,
       },
-      color: {
-        background: "rgba(255, 255, 255)", // 半透明白色背景
-        border: "#93C5FD", // Tailwind blue-300
-        highlight: {
-          background: "rgba(255, 255, 255)", // 高亮时更白
-          border: "#3B82F6", // Tailwind blue-500
-        },
-        hover: {
-          background: "rgba(219, 234, 254)", // Tailwind blue-100 带透明度
-          border: "#60A5FA", // Tailwind blue-400
-        },
-      },
+      color: COLOR_SCHEME.default,
     },
     edges: {
       font: {
-        color: "#1E3A8A", // 使用与节点相同的深蓝色
+        color: COLOR_FONT.edge.default, // 使用与节点相同的深蓝色
         size: 12, // 稍小于节点文字
         face: "Inter, system-ui, sans-serif",
         align: "horizontal",
         strokeWidth: 2, // 文字描边增强可读性
       },
       labelHighlightBold: false, // 禁用高亮加粗
-      color: {
-        color: "#BFDBFE", // Tailwind blue-200
-        highlight: "#3B82F6", // 高亮时使用蓝色
-        hover: "#60A5FA",
-      },
+      color: COLOR_SCHEME.edge.default,
       width: 2.5,
       arrows: {
         to: {
@@ -148,17 +183,35 @@ const handleClick = (event: any) => {
   if (clickTimer) clearTimeout(clickTimer);
   clickTimer = setTimeout(() => {
     console.log("handleClick with node:", event.nodes[0]);
+    console.log("全部节点", network.value);
     const targetIndex = network.value.nodes.findIndex(
       (n) => n.id === event.nodes[0]
+    );
+    const targetEdge = network.value.edges.findIndex(
+      (e) => e.id === event.nodes[0]
     );
     if (targetIndex > -1) {
       network.value.nodes[targetIndex].available =
         !network.value.nodes[targetIndex].available;
-
+      const colors = network.value.nodes[targetIndex].available
+        ? COLOR_SCHEME.active
+        : COLOR_SCHEME.default;
       network.value.nodes[targetIndex].font = {
         color: network.value.nodes[targetIndex].available
-          ? "#000000"
-          : "#AAAAAA",
+          ? COLOR_FONT.active
+          : COLOR_FONT.default,
+      };
+      network.value.nodes[targetIndex].color = colors;
+    }
+    if (targetEdge > -1) {
+      network.value.edges[targetEdge].color = network.value.nodes[targetIndex]
+        .available
+        ? COLOR_SCHEME.edge.active
+        : COLOR_SCHEME.edge.default;
+      network.value.edges[targetEdge].font = {
+        color: network.value.nodes[targetIndex].available
+          ? COLOR_FONT.edge.active
+          : COLOR_FONT.edge.default,
       };
     }
 
@@ -171,24 +224,48 @@ const handleDoubleClick = (event: any) => {
   if (clickTimer) clearTimeout(clickTimer);
   clickTimer = null;
   console.log("handleDoubleClick with node:", event.nodes[0]);
+  console.log("全部节点", network.value);
+
   const targetIndex = network.value.nodes.findIndex(
     (n) => n.id === event.nodes[0]
   );
   const targetEdge = network.value.edges.findIndex(
-    (e) => e.id === event.nodes[0] 
+    (e) => e.id === event.nodes[0]
   );
+  console.log(targetEdge);
+
   if (targetIndex > -1) {
+    // node
     network.value.nodes[targetIndex].available = true;
     network.value.nodes[targetIndex].font = {
-      color: "#000000",
+      color: COLOR_FONT.active,
     };
+    network.value.nodes[targetIndex].color = COLOR_SCHEME.active;
+    // edge
+    if (targetEdge > -1) {
+      network.value.edges[targetEdge].color = COLOR_SCHEME.edge.active;
+      network.value.edges[targetEdge].font = {
+        color: COLOR_FONT.edge.active,
+      };
+    }
+
     if (targetIndex != 0) {
       const fromTargetIndex = network.value.nodes.findIndex(
         (n) => n.id === network.value.edges[targetEdge].from
       );
+      const fromTargetEdge = network.value.edges.findIndex(
+        (e) => e.id === network.value.edges[targetEdge].from
+      );
+      // node
       network.value.nodes[fromTargetIndex].available = true;
       network.value.nodes[fromTargetIndex].font = {
-        color: "#000000",
+        color: COLOR_FONT.active,
+      };
+      network.value.nodes[fromTargetIndex].color = COLOR_SCHEME.active;
+      // edge
+      network.value.edges[fromTargetEdge].color = COLOR_SCHEME.edge.active;
+      network.value.edges[fromTargetEdge].font = {
+        color: COLOR_FONT.edge.active,
       };
     }
   }
@@ -216,7 +293,8 @@ const addNode = async (
     network.value.nodes.push({
       id: 1,
       label: key,
-      font: { color: "#000000" },
+      font: { color: COLOR_FONT.active },
+      color: COLOR_SCHEME.active,
       available: true,
     });
     kown.push(key);
@@ -248,7 +326,7 @@ const addNode = async (
     if (edge.from == parent?.id) {
       for (let i = 0; i < network.value.nodes.length; i++) {
         if (network.value.nodes[i].id != edge.to) continue;
-        network.value.nodes[i].font = { color: "#AAAAAA" };
+        network.value.nodes[i].font = { color: COLOR_FONT.default };
         network.value.nodes[i].available = false;
         kown.push(network.value.nodes[i].label);
       }
@@ -563,25 +641,25 @@ onUpdated(() => {
 <style scoped>
 /* 网格背景容器 */
 .network-background {
-  background-image: linear-gradient(
-      rgba(220, 220, 220, 0.15) 1px,
-      transparent 1px
+  background-image: 
+    /* 主网格线 (更饱和的蓝色) */ linear-gradient(
+      rgba(96, 165, 250, 0.2) 1.2px,
+      transparent 1.2px
     ),
-    linear-gradient(90deg, rgba(220, 220, 220, 0.15) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-position: -1px -1px;
-}
-/* 暗色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .network-background {
-    background-image: linear-gradient(
-        rgba(100, 100, 100, 0.15) 1px,
-        transparent 1px
-      ),
-      linear-gradient(90deg, rgba(100, 100, 100, 0.15) 1px, transparent 1px);
-  }
-}
+    /* 辅助网格线 (增加层次感) */
+      linear-gradient(90deg, rgba(96, 165, 250, 0.15) 1px, transparent 1px),
+    /* 微纹理网格 (增强细节) */
+      linear-gradient(rgba(147, 197, 253, 0.08) 0.8px, transparent 0.8px),
+    linear-gradient(90deg, rgba(147, 197, 253, 0.08) 0.8px, transparent 0.8px);
 
+  background-size: 30px 30px, /* 主网格尺寸 */ 30px 30px,
+    /* 辅助网格尺寸 */ 15px 15px, /* 微纹理网格尺寸 */ 15px 15px;
+
+  background-position: 0 0, /* 主网格定位 */ 0 0, /* 辅助网格定位 */ -1px -1px,
+    /* 微纹理偏移 */ -1px -1px;
+
+  background-color: #f0f9ff; /* Tailwind blue-50 作为底色 */
+}
 /* 画布透明处理 */
 :deep(.vis-network) canvas {
   background-color: transparent !important;
