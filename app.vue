@@ -76,6 +76,39 @@ const COLOR_SCHEME = {
       hover: "#6D28D9", // 新增深紫色悬停状态 (purple-700)
     },
   },
+  shadow: {
+    default: {
+      enabled: true,
+      color: "#3B82F680", // 使用高亮色 blue-500 带 50% 透明度
+      size: 8, // 增大阴影扩散范围
+      x: 0,
+      y: 0,
+    },
+    active: {
+      enabled: true,
+      color: "#8B5CF680", // 使用激活色 purple-500 带 50% 透明度
+      size: 8,
+      x: 0,
+      y: 0,
+    },
+    // 边阴影（适配节点风格）
+    edge: {
+      default: {
+        enabled: true,
+        color: "#93C5FD80", // blue-300 65%透明度
+        size: 4, // 比节点稍小但保持可见
+        x: 0,
+        y: 0,
+      },
+      active: {
+        enabled: true,
+        color: "#8B5CF680", // 与节点激活阴影同步
+        size: 4,
+        x: 0,
+        y: 0,
+      },
+    },
+  },
 };
 const COLOR_FONT = {
   default: "#64748B", // Tailwind slate-500
@@ -120,13 +153,7 @@ const network = ref<{
           drawThreshold: 8,
         },
       },
-      shadow: {
-        enabled: true,
-        color: "#93c5fd4c", // 蓝色阴影
-        size: 10,
-        x: 3,
-        y: 3,
-      },
+      shadow: COLOR_SCHEME.shadow.default,
       color: COLOR_SCHEME.default,
     },
     edges: {
@@ -147,11 +174,7 @@ const network = ref<{
         },
       },
       dashes: false,
-      shadow: {
-        enabled: true,
-        color: "rgba(147, 197, 253, 0.2)",
-        size: 5,
-      },
+      shadow: COLOR_SCHEME.shadow.edge.default,
     },
     // 高亮显示聚焦时的线段
     interaction: {
@@ -202,6 +225,10 @@ const handleClick = (event: any) => {
           : COLOR_FONT.default,
       };
       network.value.nodes[targetIndex].color = colors;
+      network.value.nodes[targetIndex].shadow = network.value.nodes[targetIndex]
+        .available
+        ? COLOR_SCHEME.shadow.active
+        : COLOR_SCHEME.shadow.default;
     }
     if (targetEdge > -1) {
       network.value.edges[targetEdge].color = network.value.nodes[targetIndex]
@@ -213,6 +240,10 @@ const handleClick = (event: any) => {
           ? COLOR_FONT.edge.active
           : COLOR_FONT.edge.default,
       };
+      network.value.edges[targetEdge].shadow = network.value.nodes[targetIndex]
+        .available
+        ? COLOR_SCHEME.shadow.edge.active
+        : COLOR_SCHEME.shadow.edge.default;
     }
 
     myAppDataStore.selectedNode = event.nodes[0];
@@ -241,12 +272,14 @@ const handleDoubleClick = (event: any) => {
       color: COLOR_FONT.active,
     };
     network.value.nodes[targetIndex].color = COLOR_SCHEME.active;
+    network.value.nodes[targetIndex].shadow = COLOR_SCHEME.shadow.active;
     // edge
     if (targetEdge > -1) {
       network.value.edges[targetEdge].color = COLOR_SCHEME.edge.active;
       network.value.edges[targetEdge].font = {
         color: COLOR_FONT.edge.active,
       };
+      network.value.edges[targetEdge].shadow = COLOR_SCHEME.shadow.edge.active;
     }
 
     if (targetIndex != 0) {
@@ -262,11 +295,15 @@ const handleDoubleClick = (event: any) => {
         color: COLOR_FONT.active,
       };
       network.value.nodes[fromTargetIndex].color = COLOR_SCHEME.active;
+      network.value.nodes[fromTargetIndex].shadow = COLOR_SCHEME.shadow.active;
+
       // edge
       network.value.edges[fromTargetEdge].color = COLOR_SCHEME.edge.active;
       network.value.edges[fromTargetEdge].font = {
         color: COLOR_FONT.edge.active,
       };
+      network.value.edges[fromTargetEdge].shadow =
+        COLOR_SCHEME.shadow.edge.active;
     }
   }
   for (let i = 0; i < network.value.nodes.length; i++) {
@@ -295,6 +332,7 @@ const addNode = async (
       label: key,
       font: { color: COLOR_FONT.active },
       color: COLOR_SCHEME.active,
+      shadow: COLOR_SCHEME.shadow.active,
       available: true,
     });
     kown.push(key);
