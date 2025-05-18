@@ -206,7 +206,7 @@ const handleClick = (event: any) => {
   if (clickTimer) clearTimeout(clickTimer);
   clickTimer = setTimeout(() => {
     console.log("handleClick with node:", event.nodes[0]);
-    console.log("全部节点", network.value);
+    // console.log("全部节点", network.value);
     const targetIndex = network.value.nodes.findIndex(
       (n) => n.id === event.nodes[0]
     );
@@ -255,7 +255,7 @@ const handleDoubleClick = (event: any) => {
   if (clickTimer) clearTimeout(clickTimer);
   clickTimer = null;
   console.log("handleDoubleClick with node:", event.nodes[0]);
-  console.log("全部节点", network.value);
+  // console.log("全部节点", network.value);
 
   const targetIndex = network.value.nodes.findIndex(
     (n) => n.id === event.nodes[0]
@@ -441,6 +441,7 @@ const Combine = async () => {
 const selectTheListOfNodes = ref([]);
 const selectTheStringOfNodes = ref("");
 const summary = ref("");
+const max_line_length = 40;
 const getsTheSelectedNode = async () => {
   myAppDataStore.isHiddenTheSummery = !myAppDataStore.isHiddenTheSummery;
   selectTheListOfNodes.value = [];
@@ -458,7 +459,7 @@ const getsTheSelectedNode = async () => {
       selectedNodes: selectTheListOfNodes.value,
     },
   });
-  summary.value = data;
+  summary.value = insertLineBreaks(data,max_line_length);
   console.log("服务端存储结果:", data);
 };
 
