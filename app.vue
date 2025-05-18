@@ -452,14 +452,17 @@ const getsTheSelectedNode = async () => {
       selectTheStringOfNodes.value += network.value.nodes[i].label + "->";
     }
   }
-  selectTheStringOfNodes.value = selectTheStringOfNodes.value.slice(0, -2);
+  selectTheStringOfNodes.value = insertLineBreaks(
+    selectTheStringOfNodes.value.slice(0, -2),
+    max_line_length
+  );
   const data: string = await $fetch("/api/summary", {
     method: "POST",
     body: {
       selectedNodes: selectTheListOfNodes.value,
     },
   });
-  summary.value = insertLineBreaks(data,max_line_length);
+  summary.value = insertLineBreaks(data, max_line_length);
   console.log("服务端存储结果:", data);
 };
 
