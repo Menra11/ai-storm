@@ -482,9 +482,9 @@ onUpdated(() => {
 
 <template>
   <!-- 主要的模板代码 -->
-  <div class="w-screen h-screen relative">
+  <div class="w-screen h-screen raletive">
     <vue-vis-network
-      class="w-full bg-white h-full network-background"
+      class="w-full h-full bg-white network-background rounded-xl shadow-lg"
       :nodes="network.nodes"
       :edges="network.edges"
       :options="network.options"
@@ -493,10 +493,10 @@ onUpdated(() => {
     >
     </vue-vis-network>
 
-    <aside class="absolute top-10 left-10 z-10 isolate">
+    <aside class="w-[calc(196px + 16px)] h-full absolute left-10 top-6 z-10">
       <!-- 主导航 -->
       <nav
-        class="nav flex flex-col bg-blue-100/80 backdrop-blur-xs rounded-xl shadow-lg p-4 space-y-2 w-48 transition-all duration-200 border border-blue-200/50 hover:shadow-xl hover:bg-blue-100/90"
+        class="nav flex flex-col bg-blue-100/80 backdrop-blur-xs rounded-xl shadow-lg p-4 space-y-2 w-48 transition-all duration-200 border border-blue-200/50"
       >
         <div v-if="myAppDataStore.nodesLength == 0" class="flex gap-2 mb-2">
           <!-- 添加横向间距 -->
@@ -639,7 +639,20 @@ onUpdated(() => {
           合并
         </button>
       </div>
+      <!-- think -->
+      <div
+        id="think"
+        class="mt-6 p-4 border border-blue-200/50 bg-blue-100/80 rounded-xl shadow-lg border border-blue-200/50 h-[calc(100vh-300px)]"
+      >
+        <div
+          id="content"
+          class="w-full px-4 py-2 text-sm bg-white/50 border border-blue-200/50 rounded-lg shadow-sm placeholder:text-blue-400/70 focus:ring-2 focus:ring-blue-300/50 focus:border-blue-300 transition-all duration-200 hover:border-blue-300/80"
+        >
+          think
+        </div>
+      </div>
     </aside>
+
     <main
       class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 min-h-[200px] min-w-[320px] max-h-1/2"
       :hidden="myAppDataStore.isHiddenTheSummery"
