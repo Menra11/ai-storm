@@ -199,56 +199,99 @@ const network = ref<{
 const insertLineBreaks = (str: string, maxLength: number) => {
   return str.replace(new RegExp(`(.{${maxLength}})`, "g"), "$1\n");
 };
+
 // 处理网络图事件
 let clickTimer: number | null | NodeJS.Timeout = null;
 
 const handleClick = (event: any) => {
   if (clickTimer) clearTimeout(clickTimer);
   clickTimer = setTimeout(() => {
-    console.log("handleClick with node:", event.nodes[0]);
-    // console.log("全部节点", network.value);
-    const targetIndex = network.value.nodes.findIndex(
-      (n) => n.id === event.nodes[0]
-    );
-    const targetEdge = network.value.edges.findIndex(
-      (e) => e.id === event.nodes[0]
-    );
-    if (targetIndex > -1) {
-      network.value.nodes[targetIndex].available =
-        !network.value.nodes[targetIndex].available;
-      const colors = network.value.nodes[targetIndex].available
-        ? COLOR_SCHEME.active
-        : COLOR_SCHEME.default;
-      network.value.nodes[targetIndex].font = {
-        color: network.value.nodes[targetIndex].available
-          ? COLOR_FONT.active
-          : COLOR_FONT.default,
-      };
-      network.value.nodes[targetIndex].color = colors;
-      network.value.nodes[targetIndex].shadow = network.value.nodes[targetIndex]
-        .available
-        ? COLOR_SCHEME.shadow.active
-        : COLOR_SCHEME.shadow.default;
-    }
-    if (targetEdge > -1) {
-      network.value.edges[targetEdge].color = network.value.nodes[targetIndex]
-        .available
-        ? COLOR_SCHEME.edge.active
-        : COLOR_SCHEME.edge.default;
-      network.value.edges[targetEdge].font = {
-        color: network.value.nodes[targetIndex].available
-          ? COLOR_FONT.edge.active
-          : COLOR_FONT.edge.default,
-      };
-      network.value.edges[targetEdge].shadow = network.value.nodes[targetIndex]
-        .available
-        ? COLOR_SCHEME.shadow.edge.active
-        : COLOR_SCHEME.shadow.edge.default;
+    const nodeId = event.nodes[0];
+    console.log("handleclick nodeid", nodeId);
+    if (!nodeId) return;
+    const targetIndex = network.value.nodes.findIndex((n) => n.id === nodeId);
+    if (targetIndex < 0) return;
+    const targetNode = network.value.nodes[targetIndex];
+    // 切换状态
+    const newAvailable = !targetNode.available;
+    targetNode.available = newAvailable;
+    console.log(newAvailable);
+
+    // 递归更新相关节点和边
+    if (newAvailable) {
+      activateNodeChain(nodeId);
+    } else {
+      deactivateNodeChain(nodeId);
     }
 
-    myAppDataStore.selectedNode = event.nodes[0];
-    console.log(network.value);
+    console.log("Updated network:", network.value);
   }, 250);
+};
+
+// 递归激活节点链
+const activateNodeChain = (nodeId: string | number) => {
+  const currentIndex = network.value.nodes.findIndex((n) => n.id === nodeId);
+  const currentNode = network.value.nodes[currentIndex];
+  console.log("Activating node:", currentNode);
+
+  if (!currentNode) return;
+
+  // 更新当前节点
+  currentNode.available = true;
+  currentNode.color = COLOR_SCHEME.active;
+  currentNode.font = { color: COLOR_FONT.active };
+  currentNode.shadow = COLOR_SCHEME.shadow.active;
+
+  // 更新关联边
+  network.value.edges.forEach((edge) => {
+    if (edge.to === nodeId) {
+      edge.color = COLOR_SCHEME.edge.active;
+      edge.font = { color: COLOR_FONT.edge.active };
+      edge.shadow = COLOR_SCHEME.shadow.edge.active;
+
+      // 递归更新上游节点
+      activateNodeChain(edge.from);
+    }
+  });
+
+  // 停止条件：到达根节点
+  if (nodeId === 1) {
+    console.log("activateNodeChain over");
+    return;
+  }
+};
+
+// 递归取消激活节点链
+const deactivateNodeChain = (nodeId: string | number) => {
+  const currentIndex = network.value.nodes.findIndex((n) => n.id === nodeId);
+  const currentNode = network.value.nodes[currentIndex];
+  console.log("deActivating node:", currentNode);
+  if (!currentNode) return;
+
+  // 更新当前节点
+  currentNode.available = false;
+  currentNode.color = COLOR_SCHEME.default;
+  currentNode.font = { color: COLOR_FONT.default };
+  currentNode.shadow = COLOR_SCHEME.shadow.default;
+
+  // 更新下游边和节点
+  network.value.edges.forEach((edge) => {
+    if (edge.to === nodeId) {
+      edge.color = COLOR_SCHEME.edge.default;
+      edge.font = { color: COLOR_FONT.edge.default };
+      edge.shadow = COLOR_SCHEME.shadow.edge.default;
+    }
+    if (edge.from === nodeId) {
+      edge.color = COLOR_SCHEME.edge.default;
+      edge.font = { color: COLOR_FONT.edge.default };
+      edge.shadow = COLOR_SCHEME.shadow.edge.default;
+
+      // 递归更新下游节点
+      deactivateNodeChain(edge.to);
+    }
+  });
+
+  console.log("deactivateNodeChain over");
 };
 
 const handleDoubleClick = (event: any) => {
