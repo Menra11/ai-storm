@@ -22,6 +22,10 @@ interface NodesData {
   nodes?: NodeData[];
   edges?: EdgeData[];
 }
+interface NodesAllData {
+  returnNodes: NodesData;
+  think: string;
+}
 
 interface MyNode extends Node {
   available?: boolean;
@@ -363,6 +367,7 @@ const handleDoubleClick = (event: any) => {
 };
 
 const keyWord = ref("");
+const think = ref("");
 // 添加节点
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const addNode = async (
@@ -382,12 +387,16 @@ const addNode = async (
     keyWord.value = ""; // 清空输入框
     return;
   }
-  const response: NodesData = await $fetch("/api/nodes", {
-    method: "POST",
-    body: {
-      parent: parent,
-    },
-  });
+  const { returnNodes:response, think: thinkData } = await $fetch<NodesAllData>(
+    "/api/nodes",
+    {
+      method: "POST",
+      body: {
+        parent: parent,
+      },
+    }
+  );
+  think.value = thinkData;
   response.edges?.forEach(async (edge) => {
     network.value.edges.push({
       id: edge.id,
@@ -525,7 +534,7 @@ onUpdated(() => {
 
 <template>
   <!-- 主要的模板代码 -->
-  <div class="w-screen h-screen raletive">
+  <div class="w-screen h-screen raletive p-0 m-0">
     <vue-vis-network
       class="w-full h-full bg-white network-background rounded-xl shadow-lg"
       :nodes="network.nodes"
@@ -536,7 +545,9 @@ onUpdated(() => {
     >
     </vue-vis-network>
 
-    <aside class="w-[calc(196px + 16px)] h-full absolute left-10 top-6 z-10">
+    <aside
+      class="w-[calc(196px + 16px)] h-[calc(100vh - 24px)] absolute left-10 top-6 z-10"
+    >
       <!-- 主导航 -->
       <nav
         class="nav flex flex-col bg-blue-100/80 backdrop-blur-xs rounded-xl shadow-lg p-4 space-y-2 w-48 transition-all duration-200 border border-blue-200/50"
@@ -682,19 +693,19 @@ onUpdated(() => {
           合并
         </button>
       </div>
-      <!-- think -->
-      <div
-        id="think"
-        class="mt-6 p-4 border border-blue-200/50 bg-blue-100/80 rounded-xl shadow-lg border border-blue-200/50 h-[calc(100vh-300px)]"
-      >
-        <div
-          id="content"
-          class="w-full px-4 py-2 text-sm bg-white/50 border border-blue-200/50 rounded-lg shadow-sm placeholder:text-blue-400/70 focus:ring-2 focus:ring-blue-300/50 focus:border-blue-300 transition-all duration-200 hover:border-blue-300/80"
-        >
-          think
-        </div>
-      </div>
     </aside>
+
+    <!-- think -->
+    <div
+      id="think"
+      class=" w-[calc(90vw)] h-[calc(30vh)]  absolute left-10 bottom-8 z-10 mt-6 p-4 border border-blue-200/50 bg-blue-100/80 rounded-xl shadow-lg border border-blue-200/50"
+    >
+      <div
+        id="content"
+        class="w-full h-full overflow-y-auto px-4 py-2 text-sm bg-white/50 border border-blue-200/50 rounded-lg shadow-sm placeholder:text-blue-400/70 focus:ring-2 focus:ring-blue-300/50 focus:border-blue-300 transition-all duration-200 hover:border-blue-300/80"
+        v-html="think"
+      ></div>
+    </div>
 
     <main
       class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 min-h-[200px] min-w-[320px] max-h-1/2"

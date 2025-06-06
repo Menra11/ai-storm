@@ -1,8 +1,8 @@
-import { ZhipuAI } from 'zhipuai-sdk-nodejs-v4';
+import { ZhipuAI } from "zhipuai-sdk-nodejs-v4";
 
 const client = new ZhipuAI({
-  apiKey: 'ce8a4b3520c14aecbbdcaa611b575397.UDyMaQqiploijEoq'
-})
+  apiKey: "ce8a4b3520c14aecbbdcaa611b575397.UDyMaQqiploijEoq",
+});
 
 const prompt = `
 你是一个医疗症状分级器，请严格按以下规则处理输入：
@@ -44,7 +44,7 @@ const prompt = `
 ]
 
 对于这次输入, 你需要输出一共abcdefg个可能的并发症
-`
+`;
 
 interface NodeData {
   id: number | string;
@@ -69,18 +69,31 @@ interface NodeMessage {
 }
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
+  const body = await readBody(event);
 
   const result = await client.createCompletions({
     model: "glm-z1-flash",
     messages: [
-      {"role": "assistant", "content": prompt.replace("abcdefg", body.parent.len.toString())},
-      {"role": "user", "content": "已知症状: " + body.parent.konw.join(' ')},
+      {
+        role: "assistant",
+        content: prompt.replace("abcdefg", body.parent.len.toString()),
+      },
+      { role: "user", content: "已知症状: " + body.parent.konw.join(" ") },
     ],
-    stream: false, 
-  })
-  const message = (result as any).choices[0].message.content.replace(/<think>[\s\S]*?<\/think>\n?/g, '') as string;
-  console.log(prompt.replace("abcdefg", body.parent.len.toString()), "已知症状: " + body.parent.konw.join(' '), message)
+    stream: false,
+  });
+  const message = (result as any).choices[0].message.content.replace(
+    /<think>[\s\S]*?<\/think>\n?/g,
+    ""
+  ) as string;
+  const think = (result as any).choices[0].message.content.match(
+    /<think>[\s\S]*?<\/think>\n?/g
+  ) as string[];
+  console.log(
+    prompt.replace("abcdefg", body.parent.len.toString()),
+    "已知症状: " + body.parent.konw.join(" "),
+    message,think
+  );
   const nodeMessage: NodeMessage[] = eval(message);
 
   const returnNodes: NodesData = {
@@ -89,7 +102,7 @@ export default defineEventHandler(async (event) => {
   };
   let id = Date.now();
   let pid = id;
-  nodeMessage.forEach(node => {
+  nodeMessage.forEach((node) => {
     returnNodes.nodes.push({
       id: pid,
       label: node.condition,
@@ -98,23 +111,23 @@ export default defineEventHandler(async (event) => {
       id: pid,
       from: body.parent.id,
       to: pid,
-      label: '可能并发症状'
-    })
-    for (let i = 1; i <= node.level.length; i++){
+      label: "可能并发症状",
+    });
+    for (let i = 1; i <= node.level.length; i++) {
       returnNodes.nodes.push({
         id: id + i,
-        label: node.level[i-1],
+        label: node.level[i - 1],
       });
       returnNodes.edges.push({
         id: id + i,
         from: pid,
         to: id + i,
-        label: '严重程度'
-      })
+        label: "严重程度",
+      });
     }
     pid += node.level.length + 1;
     id += node.level.length + 1;
   });
-  console.log(returnNodes)
-  return returnNodes
-})
+  console.log(returnNodes);
+  return { returnNodes, think };
+});
