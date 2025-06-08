@@ -1,1 +1,47 @@
 @import "tailwindcss";
+body {
+  font-size: 16px;
+}
+#summary {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-weight: 700;
+    margin: 1rem 0;
+    line-height: 1.25;
+  }
+  h1 {
+    font-size: 1.8rem;
+  }
+  h2 {
+    font-size: 1.5rem;
+  }
+  h3 {
+    font-size: 1.25rem;
+  }
+  h4 {
+    font-size: 1rem;
+  }
+  h5 {
+    font-size: 0.875rem;
+  }
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    margin: -40px 0;
+    li {
+      margin: -12px 0;
+    }
+  }
+  p {
+    margin: -24px 0;
+    margin-bottom: -10px;
+  }
+  hr{
+    margin: 10px 0;
+    margin-bottom: -30px;
+  }
+}

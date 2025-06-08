@@ -725,7 +725,7 @@ onUpdated(() => {
           v-if="summary"
         >
           <div>选择的病症节点：{{ selectTheStringOfNodes }}</div>
-          {{ summary }}
+         <div id="summary" v-html="summary"></div>
         </div>
         <div
           class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[120px] break-words overflow-y-auto whitespace-pre"
@@ -744,6 +744,12 @@ onUpdated(() => {
             @click="clearNetWork"
           >
             确认
+          </button>
+          <button
+            class="mt-2 px-3 py-1.5 text-sm font-medium text-blue-900 bg-white/50 hover:bg-blue-200/30 rounded-md border border-blue-200/50 hover:border-blue-300 transition-colors duration-200 shadow-sm"
+            @click="clearNetWork"
+          >
+            下载
           </button>
         </div>
       </div>
