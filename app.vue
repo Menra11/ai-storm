@@ -721,7 +721,7 @@ onUpdated(() => {
           v-if="summary"
         >
           <div>选择的病症节点：{{ selectTheStringOfNodes }}</div>
-          {{ summary }}
+          <div v-html="summary"></div>
         </div>
         <div
           class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[120px] break-words overflow-y-auto whitespace-pre"
