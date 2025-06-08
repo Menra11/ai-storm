@@ -492,6 +492,10 @@ const Combine = async () => {
 };
 const selectTheListOfNodes = ref([]);
 const selectTheStringOfNodes = ref("");
+
+import MarkdownIt from 'markdown-it'
+
+const md = new MarkdownIt()
 const summary = ref("");
 const max_line_length = 40;
 const getsTheSelectedNode = async () => {
@@ -514,7 +518,7 @@ const getsTheSelectedNode = async () => {
       selectedNodes: selectTheListOfNodes.value,
     },
   });
-  summary.value = insertLineBreaks(data, max_line_length);
+  summary.value =  md.render(insertLineBreaks(data, max_line_length));
   console.log("服务端存储结果:", data);
 };
 
