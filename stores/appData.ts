@@ -7,6 +7,7 @@ export const useMyAppDataStore = defineStore('myAppDataStore',{
     // isHiddenNav: true,
     isHiddenCombineNav: true,
     isHiddenTheSummery: true,
+    isHiddenThink: true,
     nodesLength: 0,
    }),
   actions: {}

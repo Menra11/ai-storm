@@ -387,15 +387,13 @@ const addNode = async (
     keyWord.value = ""; // 清空输入框
     return;
   }
-  const { returnNodes:response, think: thinkData } = await $fetch<NodesAllData>(
-    "/api/nodes",
-    {
+  const { returnNodes: response, think: thinkData } =
+    await $fetch<NodesAllData>("/api/nodes", {
       method: "POST",
       body: {
         parent: parent,
       },
-    }
-  );
+    });
   think.value = thinkData;
   response.edges?.forEach(async (edge) => {
     network.value.edges.push({
@@ -493,9 +491,9 @@ const Combine = async () => {
 const selectTheListOfNodes = ref([]);
 const selectTheStringOfNodes = ref("");
 
-import MarkdownIt from 'markdown-it'
+import MarkdownIt from "markdown-it";
 
-const md = new MarkdownIt()
+const md = new MarkdownIt();
 const summary = ref("");
 const max_line_length = 40;
 const getsTheSelectedNode = async () => {
@@ -518,9 +516,11 @@ const getsTheSelectedNode = async () => {
       selectedNodes: selectTheListOfNodes.value,
     },
   });
-  summary.value =  md.render(insertLineBreaks(data, max_line_length));
+  summary.value = md.render(insertLineBreaks(data, max_line_length));
   console.log("服务端存储结果:", data);
 };
+
+const isExpanded = ref(true);
 
 // 清除网络图数据
 const clearNetWork = () => {
@@ -530,6 +530,8 @@ const clearNetWork = () => {
   myAppDataStore.isHiddenCombineNav = true;
   location.reload();
 };
+
+
 onUpdated(() => {
   // 监听网络图的变化
   myAppDataStore.nodesLength = network.value.nodes.length;
@@ -702,17 +704,27 @@ onUpdated(() => {
     <!-- think -->
     <div
       id="think"
-      class=" w-[calc(90vw)] h-[calc(30vh)]  absolute left-10 bottom-8 z-10 mt-6 p-4 border border-blue-200/50 bg-blue-100/80 rounded-xl shadow-lg border border-blue-200/50"
+      class="ease-in-out duration-300 w-[calc(90vw)] h-[calc(30vh)] absolute left-10 bottom-8 z-10 mt-6 p-4 bg-blue-100/80 rounded-xl shadow-lg border border-blue-200/50"
+      :style="{ height: isExpanded ? '30vh' : '0px' }"
+      :hidden="!think"
     >
       <div
+        class=" absolute right-[-40px] cursor-pointer top-0 w-8 h-8 p-2 text-center text-sm bg-blue-100/80 border border-blue-200/50 rounded-lg shadow-sm placeholder:text-blue-400/70 focus:ring-2 focus:ring-blue-300/50 focus:border-blue-300 transition-all duration-200 hover:border-blue-300/80"
+        @click="isExpanded = !isExpanded"
+      >
+         {{ isExpanded ? '⌄' : '^' }}
+      </div>
+      <div
         id="content"
-        class="w-full h-full overflow-y-auto px-4 py-2 text-sm bg-white/50 border border-blue-200/50 rounded-lg shadow-sm placeholder:text-blue-400/70 focus:ring-2 focus:ring-blue-300/50 focus:border-blue-300 transition-all duration-200 hover:border-blue-300/80"
+        class="ease-in-out duration-300 w-full h-full overflow-y-auto px-4 py-2 text-sm bg-white/50 border border-blue-200/50 rounded-lg shadow-sm placeholder:text-blue-400/70 focus:ring-2 focus:ring-blue-300/50 focus:border-blue-300 transition-all hover:border-blue-300/80"
+        :style="{ height: isExpanded ? '100%' : '0px', opacity: isExpanded ? 1 : 0 }"
         v-html="think"
       ></div>
     </div>
 
     <main
-      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 min-h-[200px] min-w-[320px] max-h-1/2"
+      class="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 z-10 min-h-[200px] min-w-[320px] max-h-1/2"
+      :style="{ top: isExpanded ? '40vh' : '50vh' }"
       :hidden="myAppDataStore.isHiddenTheSummery"
     >
       <!-- 总结面板 -->
@@ -725,7 +737,7 @@ onUpdated(() => {
           v-if="summary"
         >
           <div>选择的病症节点：{{ selectTheStringOfNodes }}</div>
-         <div id="summary" v-html="summary"></div>
+          <div id="summary" v-html="summary"></div>
         </div>
         <div
           class="w-full p-3 space-y-1 bg-white/30 rounded-lg min-h-[120px] break-words overflow-y-auto whitespace-pre"
@@ -812,5 +824,9 @@ onUpdated(() => {
 
 .dot:nth-child(3) {
   animation-delay: 0.4s;
+}
+
+#content {
+  scrollbar-width: thin;
 }
 </style>
