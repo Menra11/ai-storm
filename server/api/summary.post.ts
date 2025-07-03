@@ -1,7 +1,8 @@
 import { ZhipuAI } from "zhipuai-sdk-nodejs-v4";
-
+import { config } from 'dotenv'
+config()
 const client = new ZhipuAI({
-  apiKey: "ce8a4b3520c14aecbbdcaa611b575397.UDyMaQqiploijEoq",
+  apiKey: process.env.KEY,
 });
 
 const prompt = `
